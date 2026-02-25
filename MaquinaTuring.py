@@ -1,7 +1,7 @@
 import sys
 
 # --- CONFIGURACIÓN DEL ALFABETO DE 17 SÍMBOLOS ---
-ALFABETO = ['+', '-', '*', '/', '**', '//', 'a', 'b', 'x', 'y', 'A', 'B', 'X', 'Y', '0', '1', '2']
+ALFABETO = ['+', '-', '*', '/', '$', '//', 'a', 'b', 'x', 'y', 'A', 'B', 'X', 'Y', '0', '1', '2']
 INDICES = {simb: i for i, simb in enumerate(ALFABETO)}
 
 def cargar_tarjetas(nombre_archivo):
@@ -25,7 +25,7 @@ def cargar_tarjetas(nombre_archivo):
                 partes = linea.split(',')
 
                 if len(partes) != len(ALFABETO):
-                    print(f"Error línea {num_linea}: {len(partes)} columnas.")
+                    print(f"Error en {nombre_archivo} línea {num_linea}: {len(partes)} columnas.")
                     sys.exit(1)
 
                 fila = []
@@ -33,6 +33,7 @@ def cargar_tarjetas(nombre_archivo):
                 for p in partes:
                     p = p.strip()
 
+                    # Extraer el símbolo a escribir
                     if p.startswith('**') or p.startswith('//'):
                         esc = p[:2]
                         resto = p[2:]
@@ -40,10 +41,19 @@ def cargar_tarjetas(nombre_archivo):
                         esc = p[0]
                         resto = p[1:]
 
-                    mov = int(resto[0])
-                    sig = int(resto[1:])
+                    # --- NUEVA LÓGICA PARA LEER 'e' ---
+                    cambia_cinta = False
+                    if 'e' in resto:
+                        partes_resto = resto.split('e')
+                        mov = int(partes_resto[0])
+                        sig = int(partes_resto[1])
+                        cambia_cinta = True
+                    else:
+                        mov = int(resto[0])
+                        sig = int(resto[1:])
 
-                    fila.append([esc, mov, sig])
+                    # Añadimos un 4to parámetro: el booleano cambia_cinta
+                    fila.append([esc, mov, sig, cambia_cinta])
 
                 tarjetas.append(fila)
                 num_linea += 1
@@ -51,7 +61,7 @@ def cargar_tarjetas(nombre_archivo):
         return tarjetas
 
     except FileNotFoundError:
-        print("Error: Archivo no encontrado.")
+        print(f"Error: Archivo {nombre_archivo} no encontrado.")
         sys.exit(1)
 
 def parsear_cinta(texto):
@@ -75,66 +85,119 @@ def interpretar_resultado(cinta):
     print(f"Negativos (2): {doses}")
     print(f"✅ RESULTADO: {unos - doses}")
 
-def ejecutar_maquina(tarjetas, cinta_str):
-    cinta = parsear_cinta(cinta_str)
-    pos = 0
+def ejecutar_maquina(tarjetas1, tarjetas2, cinta_str):
+    # Inicialización de la Doble Cinta
+    cinta1 = parsear_cinta(cinta_str)
+    cinta2 = ['*'] # La cinta auxiliar empieza con un *
+    
+    pos1 = 0
+    pos2 = 0
+    
     tarjeta = 0
     pasos = 0
+    cinta_activa = 1 # 1 para principal, 2 para auxiliar
     
-    max_pasos = 50
+    # Aumenté los pasos porque las multiplicaciones requieren muchos movimientos
+    max_pasos = 10000
     
-    print(f"\nSimulando: {cinta_str}")
+    print(f"\nSimulando Entrada: {cinta_str}")
     print("-" * 60)
 
-    while 0 <= tarjeta < len(tarjetas):
+    while True:
+        # 1. Determinar el contexto activo
+        cinta = cinta1 if cinta_activa == 1 else cinta2
+        pos = pos1 if cinta_activa == 1 else pos2
+        tarjetas = tarjetas1 if cinta_activa == 1 else tarjetas2
+
+        # 2. Verificar finalización (si pide un estado que no existe en su tarjeta)
+        if tarjeta < 0 or tarjeta >= len(tarjetas):
+            print(f"\nFin de proceso: Estado {tarjeta} no definido en Cinta {cinta_activa}.")
+            break
+
+        # 3. Control de límites de la cinta activa
         if pos < 0: 
             cinta.insert(0, '0')
             pos = 0
+            if cinta_activa == 1: pos1 = 0 
+            else: pos2 = 0
         elif pos >= len(cinta): 
             cinta.append('0')
             
         simb = cinta[pos]
+        
+        # Si encuentra un símbolo no reconocido, se detiene
         if simb not in INDICES: 
             break
             
-        # --- FILTRADO ESTRICTO DE CEROS ---
-        # 1. Marcamos la posición del cabezal
-        visual_list = [f"[{s}]" if i == pos else s for i, s in enumerate(cinta)]
+        # --- VISUALIZACIÓN DE AMBAS CINTAS ---
+        # Marcamos las posiciones de los cabezales, mostrando solo el activo entre corchetes []
+        # --- VISUALIZACIÓN DE AMBAS CINTAS (COMPACTA) ---
+        # Marcamos la posición de los cabezales con corchetes
+        vis1 = [f"[{s}]" if i == pos1 else s for i, s in enumerate(cinta1)]
+        vis2 = [f"[{s}]" if i == pos2 else s for i, s in enumerate(cinta2)]
         
-        # 2. Eliminamos cualquier '0' que esté suelto (conservamos '[0]' si el cabezal está ahí)
-        cinta_sin_ceros = [item for item in visual_list if item != '0']
-        
-        # 3. Unimos todo para imprimir
-        cinta_visual = "".join(cinta_sin_ceros)
+        # Unimos todo sin espacios extra y quitamos los ceros de relleno
+        c1_str = "".join([item for item in vis1 if item != '0'])
+        c2_str = "".join([item for item in vis2 if item != '0'])
             
-        print(f"Paso: {pasos:04d} | Estado: {tarjeta:02d} | Cinta: {cinta_visual}")
-        # ----------------------------------
+        # Imprimimos en el formato simplificado
+        print(f"paso {pasos} estado {tarjeta}")
         
+        # Pequeña ayuda visual: ponemos un '>' en la cinta que está activa ese turno
+        if cinta_activa == 1:
+            print(f"1>:{c1_str}\n2 :{c2_str}\n")
+        else:
+            print(f"1 :{c1_str}\n2>:{c2_str}\n")
+        # ------------------------------------------------
+        # -------------------------------------
+        
+        # 4. Leer la instrucción
         idx = INDICES[simb]
         instr = tarjetas[tarjeta][idx]
+        nuevo, mov, sig, cambia_cinta = instr
         
-        nuevo, mov, sig = instr
-        
+        # 5. Escribir y Mover
         cinta[pos] = nuevo
-        pos += 1 if mov == 1 else -1
+        desplazamiento = 1 if mov == 1 else -1
+        
+        if cinta_activa == 1:
+            pos1 += desplazamiento
+        else:
+            pos2 += desplazamiento
+            
+        # 6. Actualizar el estado (y cambiar de cinta si aplica)
         tarjeta = sig
         pasos += 1
+        
+        if cambia_cinta:
+            cinta_activa = 2 if cinta_activa == 1 else 1
         
         if pasos > max_pasos:
             print(f"\n🛑 Límite de pasos alcanzado ({max_pasos}).")
             break
             
-    resultado_str = "".join(cinta).strip('0') 
+    # Resultado de la Cinta 1
+    resultado_str = "".join(cinta1).replace('0', '') 
     print("-" * 60)
-    print(f"\nCinta Final: {resultado_str}")
-    
-    interpretar_resultado(cinta)
+    print(f"\nCinta 1 Final: {resultado_str}")
+    interpretar_resultado(cinta1)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Uso: python3 MaquinaTuring.py Entrada.txt [cinta]")
+    # Archivos por defecto
+    archivo1 = "Entrada.txt"
+    archivo2 = "Auxiliar.txt"
+    
+    # Verificamos si el usuario pasó la cinta como argumento
+    if len(sys.argv) > 1:
+        cinta_input = sys.argv[1]
     else:
-        archivo = sys.argv[1]
-        # Si no pasas la cinta en la terminal, usará *xyy por defecto
-        cinta_input = sys.argv[2] if len(sys.argv) > 2 else "*ayy"
-        ejecutar_maquina(cargar_tarjetas(archivo), cinta_input)
+        # Si no se pasa nada, usamos una por defecto y avisamos
+        cinta_input = "*ayy"
+        print(f"⚠️ No se proporcionó cinta. Usando valor por defecto: {cinta_input}")
+        print("💡 Uso correcto: python3 MaquinaTuring.py [cinta]\n")
+    
+    # Cargamos las tarjetas y ejecutamos
+    tarjetas1 = cargar_tarjetas(archivo1)
+    tarjetas2 = cargar_tarjetas(archivo2)
+    
+    ejecutar_maquina(tarjetas1, tarjetas2, cinta_input)

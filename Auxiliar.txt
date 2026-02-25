@@ -1,0 +1,12 @@
+000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000 # ESTADO 00: Reposo inicial.
+000,000,*101,000,000,000,000,000,x101,y101,000,000,000,000,x1e41,000,000 # ESTADO 01 escribe x por cada uno 
+000,000,*102,000,000,000,000,000,x102,y102,000,000,000,000,y0e42,000,000 # ESTADO 02 Escribe una y por cada x
+000,000,*104,000,000,000,000,b003,x003,y003,000,000,X003,Y003,0003,1003,000 # ESTADO 03: Rebobina al inicio (*). Cinta 1 llama aqui cuando todo esta copiado.
+000,000,000,000,000,000,000,000,X105,y009,000,000,X104,000,000,000,000 # ESTADO 04: Busca la siguiente 'x'. La marca 'X' y pasa a buscar 'y'. Si halla 'y', termino la mult. (salta a 09).
+000,000,000,000,000,000,000,B106,x105,Y106,000,B105,000,Y105,0008,1008,000 # ESTADO 05: Busca la siguiente 'y'. La marca 'Y' y pasa a escribir '1'. Si no hay 'y', salta a restaurar (08).
+000,000,000,000,000,000,000,b106,000,y106,000,B106,000,Y106,1007,1106,000 # ESTADO 06: Va hasta el final de la cinta (hasta hallar '0') para escribir un '1'.
+000,000,000,000,000,000,000,b007,000,y007,000,B105,000,Y105,000,1007,000 # ESTADO 07: Se devuelve a la izquierda hasta encontrar la 'Y' que acabamos de marcar.
+000,000,000,000,000,000,000,000,x008,y008,000,000,X104,y008,000,1008,000 # ESTADO 08: Esta 'x' ya multiplico todas las 'y'. Restaura las 'Y' a 'y' y vuelve al inicio (04).
+000,000,000,000,000,000,000,000,x109,y109,000,000,X109,Y109,0011,01e43,000 # ESTADO 09: Busca '1', lo borra ('0') y lo envia a Cinta 1 (Estado 43). Si no hay '1' (es '0'), limpia (11).
+000,000,*101,000,000,000,000,000,000,000,000,000,000,000,000,000,000 # ESTADO 10: Vacio (solo para mantener el orden de lineas y que el siguiente sea el 11).
+000,000,*1e44,000,000,000,000,000,0011,0011,000,000,0011,0011,0011,000,000 # ESTADO 11: (LIMPIEZA) Borra todo con '0' a la izq. Al tocar el '*', llama a Cinta 1 (Estado 44).
