@@ -19,7 +19,7 @@ Un simulador avanzado de una Máquina de Turing de dos cintas (Doble Cinta) escr
 ## ⚙️ Alfabeto Soportado
 
 La máquina reconoce el siguiente conjunto de símbolos:
-`['+', '-', '*', '/', '$', '//', 'a', 'b', 'x', 'y', 'A', 'B', 'X', 'Y', '0', '1', '2']`
+`['+', '-', '*', '/', '$', '%', 'a', 'b', 'x', 'y', 'A', 'B', 'X', 'Y', '0', '1', '2']`
 
 *Nota: El símbolo `0` representa el espacio en blanco (vacío) en las cintas.*
 
