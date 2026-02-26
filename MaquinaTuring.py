@@ -1,7 +1,7 @@
 import sys
 
 # --- CONFIGURACIÓN DEL ALFABETO DE 17 SÍMBOLOS ---
-ALFABETO = ['+', '-', '*', '/', '$', '//', 'a', 'b', 'x', 'y', 'A', 'B', 'X', 'Y', '0', '1', '2']
+ALFABETO = ['+', '-', '*', '/', '$', '%', 'a', 'b', 'x', 'y', 'A', 'B', 'X', 'Y', '0', '1', '2']
 INDICES = {simb: i for i, simb in enumerate(ALFABETO)}
 
 def cargar_tarjetas(nombre_archivo):
@@ -98,7 +98,7 @@ def ejecutar_maquina(tarjetas1, tarjetas2, cinta_str):
     cinta_activa = 1 # 1 para principal, 2 para auxiliar
     
     # Aumenté los pasos porque las multiplicaciones requieren muchos movimientos
-    max_pasos = 10000
+    max_pasos = 100000
     
     print(f"\nSimulando Entrada: {cinta_str}")
     print("-" * 60)
